@@ -1,0 +1,156 @@
+<div class="space-y-8">
+  <div class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+    <h2 class="text-2xl font-semibold mb-6 text-white">Select a User</h2>
+
+    <div *ngIf="loadingUsers">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div
+      *ngIf="!loadingUsers && users.length > 0"
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+    >
+      <button
+        *ngFor="let user of users"
+        (click)="selectUser(user)"
+        [class.bg-blue-600]="selectedUser?.id === user.id"
+        [class.bg-gray-700]="selectedUser?.id !== user.id"
+        class="px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:bg-blue-500 hover:shadow-md border border-gray-600 hover:border-blue-400 text-white"
+      >
+        {{ getFirstName(user.name) }}
+      </button>
+    </div>
+  </div>
+
+  <div
+    *ngIf="selectedUser"
+    class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700"
+  >
+    <h2 class="text-2xl font-semibold mb-6 text-white">
+      Posts by {{ getFirstName(selectedUser.name) }}
+    </h2>
+
+    <div *ngIf="loadingPosts">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <div *ngIf="!loadingPosts && posts.length > 0" class="space-y-6">
+      <!-- Posts List -->
+      <div class="space-y-4">
+        <div
+          *ngFor="let post of displayedPosts"
+          class="bg-gray-700 rounded-lg p-5 border border-gray-600 hover:border-gray-500 transition-colors duration-200"
+        >
+          <!-- Post Header -->
+          <div class="flex justify-between items-start mb-4">
+            <h3
+              class="text-lg font-semibold text-white capitalize leading-tight flex-grow pr-4"
+            >
+              {{ post.title }}
+            </h3>
+            <button
+              (click)="togglePostExpansion(post)"
+              class="flex-shrink-0 px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded-md text-sm font-medium transition-colors duration-200 text-white border border-gray-500"
+            >
+              {{ post.expanded ? 'Collapse' : 'Expand' }}
+            </button>
+          </div>
+
+          <!-- Post Body -->
+          <p class="text-gray-300 leading-relaxed mb-4">{{ post.body }}</p>
+
+          <div *ngIf="post.expanded" class="mt-6 pt-4 border-t border-gray-600">
+            <h4 class="text-md font-semibold mb-4 text-white flex items-center">
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                ></path>
+              </svg>
+              Comments
+            </h4>
+
+            <div *ngIf="post.loadingComments">
+              <div class="flex items-center py-4">
+                <div
+                  class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"
+                ></div>
+                <span class="ml-3 text-gray-400 text-sm"
+                  >Loading comments...</span
+                >
+              </div>
+            </div>
+
+            <div
+              *ngIf="
+                !post.loadingComments &&
+                post.comments &&
+                post.comments.length > 0
+              "
+              class="space-y-3"
+            >
+              <div
+                *ngFor="let comment of post.comments"
+                class="bg-gray-600 rounded-md p-4 border-l-4 border-blue-500"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <h5 class="font-medium text-white text-sm">
+                    {{ comment.name }}
+                  </h5>
+                  <span class="text-xs text-gray-400">{{ comment.email }}</span>
+                </div>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                  {{ comment.body }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              *ngIf="
+                !post.loadingComments &&
+                post.comments &&
+                post.comments.length === 0
+              "
+              class="py-4"
+            >
+              <p class="text-gray-400 text-sm italic">
+                No comments available for this post.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Load All Posts Button -->
+      <div *ngIf="hasMorePosts && !showAllPosts" class="text-center pt-4">
+        <button
+          (click)="toggleShowAllPosts()"
+          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors duration-200 text-white shadow-md hover:shadow-lg"
+        >
+          Load All Posts ({{ posts.length - 3 }} more)
+        </button>
+      </div>
+
+      <!-- Show Less Button -->
+      <div *ngIf="showAllPosts && hasMorePosts" class="text-center pt-4">
+        <button
+          (click)="toggleShowAllPosts()"
+          class="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium transition-colors duration-200 text-white shadow-md hover:shadow-lg"
+        >
+          Show Less
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="!loadingPosts && posts.length === 0" class="text-center py-8">
+      <p class="text-gray-400">No posts found for this user.</p>
+    </div>
+  </div>
+</div>
