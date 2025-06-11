@@ -1,8 +1,16 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../services/api.service';
 import { User } from '../../models/user.model';
 import { Post } from '../../models/post.model';
 import { PostComment } from '../../models/comment.model';
+
+
+export interface ExtendedPost extends Post {
+  expanded: boolean;
+  comments: PostComment[];
+  loadingComments: boolean;
+}
 
 @Component({
   selector: 'app-posts-comments',
@@ -11,7 +19,7 @@ import { PostComment } from '../../models/comment.model';
 })
 export class PostsCommentsComponent implements OnInit {
   users: User[] = [];
-  posts: Post[] = [];
+  posts: ExtendedPost[] = [];
   selectedUser: User | null = null;
   loadingUsers = false;
   loadingPosts = false;
@@ -26,11 +34,11 @@ export class PostsCommentsComponent implements OnInit {
   loadUsers(): void {
     this.loadingUsers = true;
     this.apiService.getUsers().subscribe({
-      next: (users) => {
+      next: (users: User[]) => {
         this.users = users;
         this.loadingUsers = false;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error loading users:', error);
         this.loadingUsers = false;
       },
@@ -47,8 +55,8 @@ export class PostsCommentsComponent implements OnInit {
   loadPosts(userId: number): void {
     this.loadingPosts = true;
     this.apiService.getPostsByUserId(userId).subscribe({
-      next: (posts) => {
-        this.posts = posts.map((post) => ({
+      next: (posts: Post[]) => {
+        this.posts = posts.map((post: Post): ExtendedPost => ({
           ...post,
           expanded: false,
           comments: [],
@@ -56,7 +64,7 @@ export class PostsCommentsComponent implements OnInit {
         }));
         this.loadingPosts = false;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error loading posts:', error);
         this.loadingPosts = false;
       },
@@ -67,28 +75,28 @@ export class PostsCommentsComponent implements OnInit {
     this.showAllPosts = !this.showAllPosts;
   }
 
-  togglePostExpansion(post: Post): void {
+  togglePostExpansion(post: ExtendedPost): void {
     post.expanded = !post.expanded;
     if (post.expanded && (!post.comments || post.comments.length === 0)) {
       this.loadComments(post);
     }
   }
 
-  loadComments(post: Post): void {
+  loadComments(post: ExtendedPost): void {
     post.loadingComments = true;
     this.apiService.getCommentsByPostId(post.id).subscribe({
-      next: (comments) => {
+      next: (comments: PostComment[]) => {
         post.comments = comments;
         post.loadingComments = false;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error loading comments:', error);
         post.loadingComments = false;
       },
     });
   }
 
-  get displayedPosts(): Post[] {
+  get displayedPosts(): ExtendedPost[] {
     return this.showAllPosts ? this.posts : this.posts.slice(0, 3);
   }
 
@@ -97,6 +105,9 @@ export class PostsCommentsComponent implements OnInit {
   }
 
   getFirstName(fullName: string): string {
-    return fullName.split(' ')[0];
+    if (!fullName || typeof fullName !== 'string') {
+      return '';
+    }
+    return fullName.trim().split(' ')[0] || '';
   }
 }
